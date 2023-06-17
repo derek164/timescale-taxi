@@ -3,6 +3,7 @@ from multiprocessing import cpu_count
 from pathlib import Path
 
 from pyspark.sql.types import (
+    TimestampType,
     DoubleType,
     IntegerType,
     StringType,
@@ -37,8 +38,10 @@ class TripProcessor:
             StructField("passenger_count", IntegerType(), True),
             StructField("PULocationID", IntegerType(), True),
             StructField("DOLocationID", IntegerType(), True),
-            StructField("pickup_datetime", StringType(), True),
-            StructField("dropoff_datetime", StringType(), True),
+            # StructField("pickup_datetime", StringType(), True),
+            # StructField("dropoff_datetime", StringType(), True),
+            StructField("pickup_datetime", TimestampType(), True),
+            StructField("dropoff_datetime", TimestampType(), True),
         }
         diff = StructType(valid_schema.difference(set(df.schema)))
         if not diff:
@@ -51,13 +54,18 @@ class TripProcessor:
                 )
             )
 
-    def write(self, df, file_stage):
-        # print(file_stage.as_posix())
+    def write(self, df):
         (
             df.repartition(cpu_count())
-            .write.option("maxRecordsPerFile", 100000)
-            .mode("overwrite")
-            .csv(file_stage.as_posix())
+            .write.format("jdbc")
+            .option("driver", self.timescale_db.jdbc_driver)
+            .option("url", self.timescale_db.jdbc_conn_str)
+            .option("user", self.timescale_db.user)
+            .option("password", self.timescale_db.password)
+            .option("dbtable", "trip")
+            .option("batchsize", "100000")
+            .mode("append")
+            .save()
         )
 
     def read_taxi_zones(self):
@@ -128,8 +136,10 @@ class Post2011Transformer:
                 CAST(t.passenger_count AS integer) AS passenger_count,
                 CAST(t.PULocationID AS integer) AS PULocationID,
                 CAST(t.DOLocationID AS integer) AS DOLocationID,
-                date_format(t.tpep_pickup_datetime,'yyyy-MM-dd HH:mm:ss') AS pickup_datetime,
-                date_format(t.tpep_dropoff_datetime,'yyyy-MM-dd HH:mm:ss') AS dropoff_datetime
+                --date_format(t.tpep_pickup_datetime,'yyyy-MM-dd HH:mm:ss') AS pickup_datetime,
+                --date_format(t.tpep_dropoff_datetime,'yyyy-MM-dd HH:mm:ss') AS dropoff_datetime
+                to_timestamp(t.tpep_pickup_datetime,'yyyy-MM-dd HH:mm:ss') AS pickup_datetime,
+                to_timestamp(t.tpep_dropoff_datetime,'yyyy-MM-dd HH:mm:ss') AS dropoff_datetime
             FROM raw_post2011_trips t 
             WHERE t.PULocationID <= 263 AND t.DOLocationID <= 263
             ORDER BY t.tpep_pickup_datetime

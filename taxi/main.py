@@ -10,14 +10,14 @@ from timescale.ddl import TripDatabase
 
 if __name__ == "__main__":
     # Extract raw files
-    TripExtractor().extract()
+    # TripExtractor().extract()
 
     # Initialize database schema
-    trip_db = TripDatabase()
-    trip_db.setup()
-    trip_db.preview_location_table()
-    trip_db.preview_trip_table()
-    trip_db.preview_pickup_location_daily_summary_view()
+    # trip_db = TripDatabase()
+    # trip_db.setup()
+    # trip_db.preview_location_table()
+    # trip_db.preview_trip_table()
+    # trip_db.preview_pickup_location_daily_summary_view()
 
     # Ingest normalized data to TimescaleDB
     raw = Path(__file__).parent / "data" / "raw"
@@ -31,11 +31,4 @@ if __name__ == "__main__":
         file_stage = stage / file.stem
 
         if not file_stage.exists():
-            processor.transform(file, file_stage)
-            time.sleep(5)
-
-        files = [file.as_posix() for file in file_stage.glob("*.csv")]
-
-        if len(files) > 0:
-            print(file_stage.as_posix())
-            loader.load(files)
+            processor.transform(file)

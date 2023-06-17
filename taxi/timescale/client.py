@@ -17,6 +17,27 @@ class TimeScaleClient:
     @property
     def cursor(self):
         return self.connection.cursor()
+    
+    @property
+    def user(self):
+        return self.properties.get("user")
+    
+    @property
+    def password(self):
+        return self.properties.get("password")
+    
+    @property
+    def jdbc_driver(self):
+        return "org.postgresql.Driver"
+
+    @property
+    def jdbc_conn_str(self):
+        return "jdbc:postgresql://{host}:{port}/{dbname}?{params}".format(
+            host=self.properties.get("host"),
+            port=self.properties.get("port"),
+            dbname=self.properties.get("dbname"),
+            params="sslmode=require&rewriteBatchedStatements=true",
+        )
 
     def _set_properties(self):
         properties = self._get_properties()
