@@ -1,0 +1,7 @@
+dbname: tsdb
+user: tsdbadmin
+password: azh8g5cscwczfigz
+host: qopp3t3yd0.r0zbkt65xa.tsdb.cloud.timescale.com
+port: 33225
+sslmode: require
+connect_timeout: 5
