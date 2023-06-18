@@ -1,3 +1,4 @@
+import struct
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from multiprocessing import cpu_count
 from pathlib import Path
@@ -30,7 +31,7 @@ class TripLoader:
             for future in as_completed(futures):
                 result = future.result()
                 if result:
-                    print(result)
+                    print(" ".join(result))
 
     @backoff.on_exception(
         backoff.constant,
@@ -41,23 +42,26 @@ class TripLoader:
     )
     def copy(self, file: str, timeout=30):
         try:
-            result = func_timeout(timeout, self.psql_copy_load, args=[file])
-            return result
+            return func_timeout(timeout, self.psql_copy_load, args=[file])
         except FunctionTimedOut as error:
             print(f"{file} timed out")
             raise error
 
     def psql_copy_load(self, file: str):
-        values = self.read_partition(file)
-        # print(values[0])
-
+        values, count = self.read_partition(file)
         conn = self.timescale_db.connection
         copy_mgr = CopyManager(conn, "trip", cols)
-        copy_mgr.copy(values)
-        conn.commit()
+        # print(values[0])
 
+        try:
+            copy_mgr.copy(values)
+        except struct.error as error:
+            print(f"{file} invalid data")
+            raise error
+
+        conn.commit()
         Path(file).unlink()
-        return file
+        return file, count
 
     def read_partition(self, file: str):
         df = pd.read_csv(
@@ -73,4 +77,10 @@ class TripLoader:
         df["dropoff_datetime"] = pd.Series(
             df["dropoff_datetime"].dt.to_pydatetime(), dtype="object"
         )
-        return [tuple(row) for row in df.values]
+        df["passenger_count"] = pd.to_numeric(df["passenger_count"], errors="coerce")
+        df = df.dropna(
+            subset=["passenger_count", "pickup_datetime", "dropoff_datetime"]
+        )
+        df["passenger_count"] = df["passenger_count"].astype(int)
+        # print(df.dtypes)
+        return [tuple(row) for row in df.values], df.shape[0]

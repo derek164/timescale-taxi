@@ -63,7 +63,7 @@ class TripDatabase:
 
     def create_trip_hypertable(self):
         return "SELECT create_hypertable('trip', 'pickup_datetime', if_not_exists => TRUE);"
-    
+
     def drop_trip_table(self):
         with self.timescale_db.connection as conn:
             cursor = conn.cursor()
@@ -75,7 +75,6 @@ class TripDatabase:
         cursor.execute("SELECT decompress_chunk(c, true) FROM show_chunks('trip') c;")
         conn.commit()
         conn.close()
-
 
     def enable_trip_hypertable_compression(self):
         conn = self.timescale_db.connection

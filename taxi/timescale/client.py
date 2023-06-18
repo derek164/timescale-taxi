@@ -1,8 +1,10 @@
 from pathlib import Path
 
+import backoff
 import psycopg2
 import yaml
 from jsonschema import validate
+from psycopg2 import OperationalError
 
 
 class TimeScaleClient:
@@ -11,8 +13,12 @@ class TimeScaleClient:
         self.properties = self._set_properties()
 
     @property
+    @backoff.on_exception(backoff.expo, OperationalError, max_tries=5)
     def connection(self):
-        return psycopg2.connect(**self.properties)
+        try:
+            return psycopg2.connect(**self.properties)
+        except OperationalError as error:
+            raise error
 
     @property
     def cursor(self):
