@@ -1,6 +1,14 @@
 # NYC "Yellow Taxi" Trips
 
-## Questions
+## Prompt
+We will use the [NYC "Yellow Taxi" Trips](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) data provided as parquet files. You will need to find a way to collect those parquet files (as many as you can) to answer some questions.
+
+</br>
+
+The idea is to import all those parquet files to your TimescaleDB, so you will need to work on the data model and how you can store this information efficiently to run some queries. Remember that TimescaleDB is Postgres at its core, but with some amazing functionalities, like Hypertables, Continuous Aggregates, and Compression.
+
+</br>
+
 1. Return all the trips over 0.9 percentile in the distance traveled for any Parquet files you can find there.
 2. Create a continuous aggregate that rolls up stats on passenger count and fare amount by pickup location.
 3. Do not implement, but explain your architecture on how you’ll solve this problem. Another request we have is to upload that information to another system daily. We need a solution that allows us to push some information into our Salesforce so Sales, Finance, and Marketing can make better decisions. Some requirements to consider are:
@@ -67,7 +75,7 @@ SELECT add_compression_policy('trip', INTERVAL '1d');
 ```
 
 #### `pickup_location_daily_summary`
-This view is a solution to question (2). It is a [continuous aggregate](https://docs.timescale.com/getting-started/latest/create-cagg/) of the `trip` table, with various statistics about passenger count and fare amount for a given pickup location and day.
+This view is the solution to question (2). It is a [continuous aggregate](https://docs.timescale.com/getting-started/latest/create-cagg/) of the `trip` table, with various statistics about passenger count and fare amount for a given pickup location and day.
 ```sql
 CREATE MATERIALIZED VIEW IF NOT EXISTS pickup_location_daily_summary
 WITH (timescaledb.continuous) 
