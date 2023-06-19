@@ -156,6 +156,8 @@ With that said, this pipeline could follow this general strategy:
 </br>
 
 With respect to architecture, there are a lot of options, but here's what I might implement:
-1. Scheduled cloudwatch event to trigger a Glue job.
-2. Create Glue job to extract new records from Timescale and insert to Salesforce.
+1. Scheduled cloudwatch event to trigger a lambda function.
+2. Lambda function trigger glue job, and passes on date parameter from event.
+3. Glue job to extract records inserted on the given date from Timescale and write to Salesforce.
     - Use spark connectors to interface with Timescale and Salesforce.
+    - The default date is the previous day. For backfills, specify the date in the cloudwatch event.
