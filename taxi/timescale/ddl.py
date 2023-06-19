@@ -19,8 +19,10 @@ class TripDatabase:
             cursor.execute(self.create_trip_hypertable())
             conn.commit()
 
+        self.create_trip_distance_index()
         self.enable_trip_hypertable_compression()
         self.create_pickup_location_daily_summary_view()
+        self.create_trip_distance_daily_view()
 
     def create_location_table(self):
         return """
@@ -69,13 +71,6 @@ class TripDatabase:
             cursor = conn.cursor()
             cursor.execute("DROP TABLE trip;")
 
-    def decompress_trip_hypertable(self):
-        conn = self.timescale_db.connection
-        cursor = conn.cursor()
-        cursor.execute("SELECT decompress_chunk(c, true) FROM show_chunks('trip') c;")
-        conn.commit()
-        conn.close()
-
     def enable_trip_hypertable_compression(self):
         conn = self.timescale_db.connection
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
@@ -99,8 +94,8 @@ class TripDatabase:
         cursor.execute(
             """
             CREATE MATERIALIZED VIEW IF NOT EXISTS pickup_location_daily_summary
-            WITH (timescaledb.continuous) AS
-            SELECT
+            WITH (timescaledb.continuous) 
+            AS SELECT
                 PULocationID,
                 time_bucket('1 day', pickup_datetime) AS day,
                 avg(passenger_count) AS avg_passenger_count,
@@ -117,23 +112,65 @@ class TripDatabase:
         conn.commit()
         conn.close()
 
+    def create_trip_distance_daily_view(self):
+        conn = self.timescale_db.connection
+        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            CREATE MATERIALIZED VIEW trip_distance_daily
+            WITH (timescaledb.continuous)
+            AS SELECT
+                time_bucket('1 day', pickup_datetime) AS day,
+                tdigest(100, trip_distance) AS tdigest
+            FROM trip
+            GROUP BY day;
+            """
+        )
+        conn.commit()
+        conn.close()
+
+    def preview(self):
+        self.preview_location_table()
+        self.preview_trip_table()
+        self.preview_top10_distance_trips()
+        self.preview_pickup_location_daily_summary_view()
+
     def preview_location_table(self):
         with self.timescale_db.connection as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM location LIMIT 5;")
-            print(cursor.fetchall())
-            print([desc[0] for desc in cursor.description])
+            columns = [desc[0] for desc in cursor.description]
+            df = pd.DataFrame(cursor.fetchall(), columns=columns)
+            print(df.head())
 
     def preview_trip_table(self):
         with self.timescale_db.connection as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM trip LIMIT 5;")
-            print(cursor.fetchall())
-            print([desc[0] for desc in cursor.description])
+            columns = [desc[0] for desc in cursor.description]
+            df = pd.DataFrame(cursor.fetchall(), columns=columns)
+            print(df.head())
 
     def preview_pickup_location_daily_summary_view(self):
         with self.timescale_db.connection as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM pickup_location_daily_summary LIMIT 5;")
-            print(cursor.fetchall())
-            print([desc[0] for desc in cursor.description])
+            columns = [desc[0] for desc in cursor.description]
+            df = pd.DataFrame(cursor.fetchall(), columns=columns)
+            print(df.head())
+
+    def preview_top10_distance_trips(self):
+        with self.timescale_db.connection as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT *
+                FROM trip
+                WHERE trip_distance > (SELECT approx_percentile(0.90, rollup(tdigest)) FROM trip_distance_daily)
+                LIMIT 5;
+                """
+            )
+            columns = [desc[0] for desc in cursor.description]
+            df = pd.DataFrame(cursor.fetchall(), columns=columns)
+            print(df.head())

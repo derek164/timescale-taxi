@@ -9,15 +9,13 @@ from timescale.client import TimeScaleClient
 from timescale.ddl import TripDatabase
 
 if __name__ == "__main__":
-    # # Extract raw files
+    # Extract raw files
     # TripExtractor().extract()
 
-    # # Initialize database schema
-    # trip_db = TripDatabase()
+    # Initialize database schema
+    trip_db = TripDatabase()
     # trip_db.setup()
-    # trip_db.preview_location_table()
-    # trip_db.preview_trip_table()
-    # trip_db.preview_pickup_location_daily_summary_view()
+    trip_db.preview()
 
     # Ingest normalized data to TimescaleDB
     raw = Path(__file__).parent / "data" / "raw"

@@ -115,13 +115,6 @@ class Post2011Transformer:
         # raw_post2011_trips = raw_post2011_trips.limit(100)  # testing
         raw_post2011_trips.createOrReplaceTempView("raw_post2011_trips")
         post2011_trips = self.spark.sql(
-            # """
-            # SELECT t.Trip_distance AS trip_distance,
-            #     t.fare_amount,
-            #     CAST(t.passenger_count AS integer) AS passenger_count,
-            #     CAST(t.PULocationID AS integer) AS PULocationID
-            # FROM raw_post2011_trips t
-            # """
             """
             SELECT t.Trip_distance AS trip_distance,
                 t.fare_amount,
@@ -131,7 +124,10 @@ class Post2011Transformer:
                 date_format(t.tpep_pickup_datetime,'yyyy-MM-dd HH:mm:ss') AS pickup_datetime,
                 date_format(t.tpep_dropoff_datetime,'yyyy-MM-dd HH:mm:ss') AS dropoff_datetime
             FROM raw_post2011_trips t 
-            WHERE t.PULocationID <= 263 AND t.DOLocationID <= 263
+            WHERE t.PULocationID <= 263 
+                AND t.DOLocationID <= 263
+                AND t.tpep_pickup_datetime >= '2009-01-01'
+                AND t.tpep_pickup_datetime <= '2023-03-31'
             ORDER BY t.tpep_pickup_datetime
             """
         )
@@ -178,15 +174,6 @@ class Pre2011Transformer:
 
     def trip_zone_spatial_join(self, year):
         if year == 2009:
-            # query = """
-            # SELECT t.Trip_distance AS trip_distance,
-            #     t.Fare_Amt AS fare_amount,
-            #     CAST(t.Passenger_Count AS integer) AS passenger_count,
-            #     CAST(z.LocationID AS integer) AS PULocationID
-            # FROM pre2011_trips_with_geom t, taxi_zones z
-            # WHERE ST_Intersects(z.geometry, t.PU_geometry)
-            # """
-
             query = """
             SELECT t.Trip_distance AS trip_distance,
                 t.Fare_Amt AS fare_amount,
@@ -198,20 +185,12 @@ class Pre2011Transformer:
             FROM pre2011_trips_with_geom t
             INNER JOIN taxi_zones AS PU_zone ON ST_Intersects(PU_zone.geometry, t.PU_geometry)
             INNER JOIN taxi_zones AS DO_zone ON ST_Intersects(DO_zone.geometry, t.DO_geometry)
+            WHERE t.Trip_Pickup_DateTime >= '2009-01-01'
+                AND t.Trip_Pickup_DateTime <= '2023-03-31'
             ORDER BY t.Trip_Pickup_DateTime
             """
 
         if year == 2010:
-            # query = """
-            # SELECT t.trip_distance,
-            #     t.fare_amount,
-            #     CAST(t.passenger_count AS integer) AS passenger_count,
-            #     CAST(z.LocationID AS integer) AS PULocationID,
-            #     CAST(z.LocationID AS integer) AS PULocationID,
-            # FROM pre2011_trips_with_geom t, taxi_zones z
-            # WHERE ST_Intersects(z.geometry, t.PU_geometry)
-            # """
-
             query = """
             SELECT t.trip_distance,
                 t.fare_amount,
@@ -223,6 +202,8 @@ class Pre2011Transformer:
             FROM pre2011_trips_with_geom t
             INNER JOIN taxi_zones AS PU_zone ON ST_Intersects(PU_zone.geometry, t.PU_geometry)
             INNER JOIN taxi_zones AS DO_zone ON ST_Intersects(DO_zone.geometry, t.DO_geometry)
+            WHERE t.Trip_Pickup_DateTime >= '2009-01-01'
+                AND t.Trip_Pickup_DateTime <= '2023-03-31'
             ORDER BY t.pickup_datetime
             """
 

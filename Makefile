@@ -1,22 +1,12 @@
-watch: venv/touchfile
+build:
+	@docker build --no-cache -t pyspark-sedona .
 
-venv/touchfile: requirements.txt
-	@test -d venv
-	@. venv/bin/activate; pip install --upgrade pip; pip install -Ur requirements.txt
-	@touch venv/touchfile
-
-freeze:
-	@pip freeze > requirements.txt
-
-env:
-	@python3 -m venv venv
-	@. venv/bin/activate; pip install --upgrade pip; pip install -Ur requirements.txt
-
-install: env
+start:
+	@docker run --rm -it --user 0 -v ${PWD}:/app --entrypoint bash pyspark-sedona
 
 run:
-	@. venv/bin/activate; python3 taxi/main.py
+	@python3 taxi/main.py
 
 format:
-	@. venv/bin/activate; isort .
-	@. venv/bin/activate; black .
+	@isort .
+	@black .

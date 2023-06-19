@@ -13,4 +13,6 @@ RUN wget https://jdbc.postgresql.org/download/postgresql-42.6.0.jar && mv postgr
 COPY requirements.txt .
 RUN pip install -r requirements.txt --no-cache-dir
 
+WORKDIR "/app"
+
 USER 1001

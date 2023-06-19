@@ -83,4 +83,4 @@ class TripLoader:
         )
         df["passenger_count"] = df["passenger_count"].astype(int)
         # print(df.dtypes)
-        return [tuple(row) for row in df.values], df.shape[0]
+        return [tuple(row) for row in df.values], str(df.shape[0])
