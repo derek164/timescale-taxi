@@ -67,7 +67,7 @@ SELECT add_compression_policy('trip', INTERVAL '1d');
 ```
 
 #### `pickup_location_daily_summary`
-This view is a solution to question (2). It is a continuous aggregate of the `trip` table, with various statistics about passenger count and fare amount for a given pickup location and day.
+This view is a solution to question (2). It is a [continuous aggregate](https://docs.timescale.com/getting-started/latest/create-cagg/) of the `trip` table, with various statistics about passenger count and fare amount for a given pickup location and day.
 ```sql
 CREATE MATERIALIZED VIEW IF NOT EXISTS pickup_location_daily_summary
 WITH (timescaledb.continuous) 
@@ -86,7 +86,7 @@ GROUP BY day, PULocationID;
 ```
 
 #### `trip_distance_daily`
-This view is a daily continuous aggregate that contains percentile aggregates for `trip_distance`. Using accessors, it becomes simple and fast to then calculate approximate percentiles over various time horizons.
+This view is a daily [continuous aggregate](https://docs.timescale.com/getting-started/latest/create-cagg/) that contains percentile aggregates for `trip_distance`. Using accessors, it becomes simple and fast to then calculate approximate percentiles over various time horizons.
 ```sql
 CREATE MATERIALIZED VIEW trip_distance_daily
 WITH (timescaledb.continuous)
