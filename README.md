@@ -115,7 +115,7 @@ With the database schema defined, the outstanding task was to build a pipeline t
 
 I broke this down into a few steps:
 1. Download the raw `.parquet` files.
-    > Used multiprocessing to parallelize the downloads. Created separate directories for pre- and post-2011 files to accomodate for different schemas. Pre-2011 files contained pickup and dropoff coordinates rather than Taxi Zone IDs, which required extra processing.
+    > Used multiprocessing to parallelize the downloads. Created separate directories for pre- and post-2011 files to accomodate for different schemas. Pre-2011 files contain pickup and dropoff coordinates rather than Taxi Zone IDs, which requires extra processing to retrieve.
 2. Normalize and stage the data.
     > In this Timescale [tutorial](https://docs.timescale.com/tutorials/latest/nyc-taxi-cab/advanced-nyc/), I learned that you could combine the data in the NYC taxi dataset with geospatial data using the `PostGIS` extension. However, I think it makes more sense to pre-process the data so that it is faster and simpler to draw insights in Timescale. I used `spark sql` and `sedona` to get Taxi Zone IDs from coordinates for Pre-2011 files. Additionally, I selected the desired columns, standardized column names and data types, and performed some data cleaning before validating the processed dataframe against the expected schema. As a final step, I partitioned the dataframe and wrote it out to `.csv` files with no more than 100,000 records.
 3. Load the staged data to Timescale.
