@@ -8,10 +8,10 @@
     - We should avoid duplicates and have a clear way to backfill if needed.
 
 ## Dependencies
-- Timescale Service (configured with `.yaml` under `taxi/timescale/databases`)
+- Timescale service (configured with `.yaml` under `taxi/timescale/databases`)
 - Docker for environment with PySpark/Sedona installation and python libraries
 
-## Setup
+## Usage
 Build the image
 ```
 make build
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS location (
 ```
 
 #### `trip`
-This is the main table, representing trip data. It has foreign key constraints to the `location` table for pickup and dropoff locations.  
+This is the main table, representing trip data. It has foreign key constraints to the `location` table for pickup and dropoff locations. 
 *Note*: For the most part, only the subset of columns needed to answer the questions for this assignment were used.
 ```sql
 CREATE TABLE IF NOT EXISTS trip (
@@ -97,9 +97,15 @@ FROM trip
 GROUP BY day;
 ```
 
-This was useful for question (3) when calculating the 0.9 percentile in the distance traveled across all trips.
+This was useful for question (3) when calculating the 0.9 percentile in the distance traveled across all trips, where you can roll up percentile data from a continuous aggregate as demonstrated in the Timescale [documentation](https://docs.timescale.com/api/latest/hyperfunctions/percentile-approximation/tdigest#extended-examples)
 ```sql
 SELECT *
 FROM trip
 WHERE trip_distance > (SELECT approx_percentile(0.90, rollup(tdigest)) FROM trip_distance_daily);
 ```
+
+## ETL Pipeline
+With the database schema defined, the outstanding task was to build a pipeline that makes [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) available from our Timescale service so that we can answer out questions. I broke this down into a few steps:
+1. Download the raw `.parquet` files.
+2. Normalize the data to expected format.
+3. Load the normalized data to Timescale.
