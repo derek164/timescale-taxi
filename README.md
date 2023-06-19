@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS location (
 
 #### `trip`
 This is the main table, representing trip data. It has foreign key constraints to the `location` table for pickup and dropoff locations. 
-*Note*: For the most part, only the subset of columns needed to answer the questions for this assignment were used.
+***Note***: For the most part, only the subset of columns needed to answer the questions for this assignment were used.
 ```sql
 CREATE TABLE IF NOT EXISTS trip (
     trip_distance DOUBLE PRECISION  NULL,
