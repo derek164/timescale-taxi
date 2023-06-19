@@ -202,8 +202,8 @@ class Pre2011Transformer:
             FROM pre2011_trips_with_geom t
             INNER JOIN taxi_zones AS PU_zone ON ST_Intersects(PU_zone.geometry, t.PU_geometry)
             INNER JOIN taxi_zones AS DO_zone ON ST_Intersects(DO_zone.geometry, t.DO_geometry)
-            WHERE t.Trip_Pickup_DateTime >= '2009-01-01'
-                AND t.Trip_Pickup_DateTime <= '2023-03-31'
+            WHERE t.pickup_datetime >= '2009-01-01'
+                AND t.pickup_datetime <= '2023-03-31'
             ORDER BY t.pickup_datetime
             """
 
