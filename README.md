@@ -101,7 +101,7 @@ FROM trip
 GROUP BY day;
 ```
 
-This was useful for question (3) when calculating the 0.9 percentile in the distance traveled across all trips, where you can roll up percentile data from a continuous aggregate as demonstrated in the Timescale [documentation](https://docs.timescale.com/api/latest/hyperfunctions/percentile-approximation/tdigest#extended-examples)
+This was useful for question (3) when calculating the 0.9 percentile in the distance traveled across all trips, where you can roll up percentile data from a continuous aggregate as demonstrated in the Timescale [documentation](https://docs.timescale.com/api/latest/hyperfunctions/percentile-approximation/tdigest#extended-examples).
 ```sql
 SELECT *
 FROM trip
@@ -109,9 +109,7 @@ WHERE trip_distance > (SELECT approx_percentile(0.90, rollup(tdigest)) FROM trip
 ```
 
 ## ETL Pipeline
-With the database schema defined, the outstanding task was to build a pipeline that makes [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) available from our Timescale service so that we can answer our questions.  
-
-</br>
+With the database schema defined, the outstanding task was to build a pipeline that makes [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) available from our Timescale service so that we can answer our questions.   
 
 I broke this down into a few steps:
 1. Download the raw `.parquet` files.
