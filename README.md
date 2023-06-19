@@ -20,11 +20,11 @@ Start container
 ```
 make start
 ```
-Run the pipeline
+Run the pipeline (skip since data is already in Timescale)
 ```
 make run
 ```
-Preview database
+Preview answers
 ```
 make preview
 ```
@@ -113,33 +113,33 @@ I broke this down into a few steps:
 1. Download the raw `.parquet` files.
     > Used multiprocessing to parallelize the downloads. Created separate directories for pre- and post-2011 files to accomodate for different schemas. Pre-2011 files contained pickup and dropoff coordinates rather than Taxi Zone IDs, which required extra processing.
 2. Normalize and stage the data.
-    > In this Timescale [tutorial](https://docs.timescale.com/tutorials/latest/nyc-taxi-cab/advanced-nyc/), I learned that you could combine the data in the NYC taxi dataset with geospatial data using the `PostGIS` extension. However, I think it makes more sense to pre-process the data so that it is faster and simpler to draw insights in Timescale. I used `spark sql` and `sedona` to get taxi zone IDs from coordinates for Pre-2011 files. Additionally, I selected the desired columns, standardized column names, and normalized data types before validating the processed dataframe against the expected schema. As a final step, I partitioned the dataframe and wrote it out to `.csv` files with no more than 100,000 records.
+    > In this Timescale [tutorial](https://docs.timescale.com/tutorials/latest/nyc-taxi-cab/advanced-nyc/), I learned that you could combine the data in the NYC taxi dataset with geospatial data using the `PostGIS` extension. However, I think it makes more sense to pre-process the data so that it is faster and simpler to draw insights in Timescale. I used `spark sql` and `sedona` to get Taxi Zone IDs from coordinates for Pre-2011 files. Additionally, I selected the desired columns, standardized column names, and normalized data types before validating the processed dataframe against the expected schema. As a final step, I partitioned the dataframe and wrote it out to `.csv` files with no more than 100,000 records.
 3. Load the staged data to Timescale.
-    > Used multiprocessing in combination with [pgcopy](https://pgcopy.readthedocs.io/en/1.5.0/) for fast data loading into PostgreSQL with [binary copy](https://www.postgresql.org/docs/9.3/sql-copy.html). Each staged file is deleted after successful ingestion to Timescale.
+    > Used multiprocessing in combination with [pgcopy](https://pgcopy.readthedocs.io/en/1.5.0/) for fast data loading into Timescale with [binary copy](https://www.postgresql.org/docs/9.3/sql-copy.html). Each staged file is deleted after successful ingestion to Timescale.
 
 As such, the structure of the file store is as follows:
 ```
 taxi
 │
 └───data
-│   │
-│   └───raw
-│   │   │
-│   │   └───Pre2011
-│   │   │   │   yellow_tripdata_2009-01.parquet
-│   │   │   │   ...
-│   │   │
-│   │   └───Post2011
-│   │       │   yellow_tripdata_2011-01.parquet
-│   │       │   ...
-│   │
-│   └───stage
-│       │
-│       └───yellow_tripdata_YYYY-MM
-│           │   _SUCCESS
-│           │   part-00000-30702540-01d8-4b6d-a5a6-986f6f7dcaeb-c000.csv
-│           │   part-00000-30702540-01d8-4b6d-a5a6-986f6f7dcaeb-c001.csv
-│           │   ...
+    │
+    └───raw
+    │   │
+    │   └───Pre2011
+    │   │   │   yellow_tripdata_2009-01.parquet
+    │   │   │   ...
+    │   │
+    │   └───Post2011
+    │       │   yellow_tripdata_2011-01.parquet
+    │       │   ...
+    │
+    └───stage
+        │
+        └───yellow_tripdata_YYYY-MM
+            │   _SUCCESS
+            │   part-00000-30702540-01d8-4b6d-a5a6-986f6f7dcaeb-c000.csv
+            │   part-00000-30702540-01d8-4b6d-a5a6-986f6f7dcaeb-c001.csv
+            │   ...
 ```
 
 In a production setting, I would have used `S3` to store the raw files and `HDFS` as a file store for the processing and ingestion steps. 
