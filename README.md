@@ -145,7 +145,7 @@ taxi
 In a production setting, I would have used `S3` to store the raw files and `HDFS` as a file store for the processing and ingestion steps. 
 
 ## Daily Saleforce Load
-Before getting into the architecture, we need to make a fanciful assumption that the source data is updated on a daily basis. In actuality, trip data is published monthly (with two months delay) instead of bi-annually as of 05/13/2022. Additionally, we'll assume that the source data format is comparable to what it is now.
+Before getting into the architecture, we need to make a fanciful assumption that the source data is updated on a daily basis. In actuality, trip data is published monthly (with two months delay) instead of bi-annually as of 05/13/2022. Additionally, we'll assume that the source data format is provided in a comparable format (i.e. `.parquet`) and the Timescale database is populated by a process similar to this pipeline.
 
 </br>
 

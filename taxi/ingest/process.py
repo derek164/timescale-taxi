@@ -213,5 +213,5 @@ class Pre2011Transformer:
         # )
         pre2011_trips_with_PULocationID.printSchema()
         # print(pre2011_trips_with_PULocationID.limit(5).toPandas())
-        pre2011_trips_with_PULocationID.show(5)
+        # pre2011_trips_with_PULocationID.show(5)
         return pre2011_trips_with_PULocationID
