@@ -3,11 +3,7 @@
 ## Prompt
 We will use the [NYC "Yellow Taxi" Trips](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) data provided as parquet files. You will need to find a way to collect those parquet files (as many as you can) to answer some questions.
 
-</br>
-
 The idea is to import all those parquet files to your TimescaleDB, so you will need to work on the data model and how you can store this information efficiently to run some queries. Remember that TimescaleDB is Postgres at its core, but with some amazing functionalities, like Hypertables, Continuous Aggregates, and Compression.
-
-</br>
 
 1. Return all the trips over 0.9 percentile in the distance traveled for any Parquet files you can find there.
 2. Create a continuous aggregate that rolls up stats on passenger count and fare amount by pickup location.
@@ -155,13 +151,9 @@ In a production setting, I would have used `S3`/`EMRFS` as a file store.
 ## Daily Saleforce Load
 Before getting into the architecture, we need to make a fanciful assumption that the source data is updated on a daily basis. In actuality, trip data is published monthly (with two months delay) instead of bi-annually as of 05/13/2022. Additionally, we'll assume that the source data is provided in a comparable format (i.e. `.parquet`) and the Timescale database is populated by a process similar to this pipeline.
 
-</br>
-
 With that said, this pipeline could follow this general strategy:
 1. In the process that populates Timescale with trip data, include a field in the `trip` table to denote the time at which a record was inserted.
 2. Trigger an overnight process to migrate trips inserted the previous day to Salesforce.
-
-</br>
 
 With respect to architecture, there are a lot of options, but here's what I might implement:
 1. Scheduled cloudwatch event to trigger a lambda function.
