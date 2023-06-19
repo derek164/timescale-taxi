@@ -10,12 +10,10 @@ from timescale.ddl import TripDatabase
 
 if __name__ == "__main__":
     # Extract raw files
-    # TripExtractor().extract()
+    TripExtractor().extract()
 
     # Initialize database schema
-    trip_db = TripDatabase()
-    # trip_db.setup()
-    trip_db.preview()
+    TripDatabase().setup()
 
     # Ingest normalized data to TimescaleDB
     raw = Path(__file__).parent / "data" / "raw"

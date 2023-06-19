@@ -6,6 +6,10 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from timescale.client import TimeScaleClient
 
 
+pd.set_option("display.width", 120)
+pd.set_option("display.max_columns", 7)
+
+
 class TripDatabase:
     def __init__(self):
         self.timescale_db = TimeScaleClient(database="hosted")
@@ -122,7 +126,7 @@ class TripDatabase:
             WITH (timescaledb.continuous)
             AS SELECT
                 time_bucket('1 day', pickup_datetime) AS day,
-                tdigest(100, trip_distance) AS tdigest
+                tdigest(120, trip_distance) AS tdigest
             FROM trip
             GROUP BY day;
             """
@@ -131,9 +135,13 @@ class TripDatabase:
         conn.close()
 
     def preview(self):
+        print(" location table ".center(120, "-"))
         self.preview_location_table()
+        print(" trip table ".center(120, "-"))
         self.preview_trip_table()
+        print(" trips in top 10th percentile for distance ".center(120, "-"))
         self.preview_top10_distance_trips()
+        print(" daily summary stats by pickup location ".center(120, "-"))
         self.preview_pickup_location_daily_summary_view()
 
     def preview_location_table(self):

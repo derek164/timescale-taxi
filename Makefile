@@ -7,6 +7,9 @@ start:
 run:
 	@python3 taxi/main.py
 
+preview:
+	@python3 taxi/preview.py
+
 format:
 	@isort .
 	@black .
