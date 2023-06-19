@@ -105,7 +105,57 @@ WHERE trip_distance > (SELECT approx_percentile(0.90, rollup(tdigest)) FROM trip
 ```
 
 ## ETL Pipeline
-With the database schema defined, the outstanding task was to build a pipeline that makes [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) available from our Timescale service so that we can answer out questions. I broke this down into a few steps:
+With the database schema defined, the outstanding task was to build a pipeline that makes [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) available from our Timescale service so that we can answer our questions.  
+
+</br>
+
+I broke this down into a few steps:
 1. Download the raw `.parquet` files.
-2. Normalize the data to expected format.
-3. Load the normalized data to Timescale.
+    > Used multiprocessing to parallelize the downloads. Created separate directories for pre- and post-2011 files to accomodate for different schemas. Pre-2011 files contained pickup and dropoff coordinates rather than Taxi Zone IDs, which required extra processing.
+2. Normalize and stage the data.
+    > In this Timescale [tutorial](https://docs.timescale.com/tutorials/latest/nyc-taxi-cab/advanced-nyc/), I learned that you could combine the data in the NYC taxi dataset with geospatial data using the `PostGIS` extension. However, I think it makes more sense to pre-process the data so that it is faster and simpler to draw insights in Timescale. I used `spark sql` and `sedona` to get taxi zone IDs from coordinates for Pre-2011 files. Additionally, I selected the desired columns, standardized column names, and normalized data types before validating the processed dataframe against the expected schema. As a final step, I partitioned the dataframe and wrote it out to `.csv` files with no more than 100,000 records.
+3. Load the staged data to Timescale.
+    > Used multiprocessing in combination with [pgcopy](https://pgcopy.readthedocs.io/en/1.5.0/) for fast data loading into PostgreSQL with [binary copy](https://www.postgresql.org/docs/9.3/sql-copy.html). Each staged file is deleted after successful ingestion to Timescale.
+
+As such, the structure of the file store is as follows:
+```
+taxi
+│
+└───data
+│   │
+│   └───raw
+│   │   │
+│   │   └───Pre2011
+│   │   │   │   yellow_tripdata_2009-01.parquet
+│   │   │   │   ...
+│   │   │
+│   │   └───Post2011
+│   │       │   yellow_tripdata_2011-01.parquet
+│   │       │   ...
+│   │
+│   └───stage
+│       │
+│       └───yellow_tripdata_YYYY-MM
+│           │   _SUCCESS
+│           │   part-00000-30702540-01d8-4b6d-a5a6-986f6f7dcaeb-c000.csv
+│           │   part-00000-30702540-01d8-4b6d-a5a6-986f6f7dcaeb-c001.csv
+│           │   ...
+```
+
+In a production setting, I would have used `S3` to store the raw files and `HDFS` as a file store for the processing and ingestion steps. 
+
+## Daily Saleforce Load
+Before getting into the architecture, we need to make a fanciful assumption that the source data is updated on a daily basis. In actuality, trip data is published monthly (with two months delay) instead of bi-annually as of 05/13/2022. Additionally, we'll assume that the source data format is comparable to what it is now.
+
+</br>
+
+With that said, this pipeline could follow this general strategy:
+1. In the process that populates Timescale with trip data, include a field in the `trip` table to denote the time at which a record was inserted.
+2. Trigger an overnight process to migrate trips inserted the previous day to Salesforce.
+
+</br>
+
+With respect to architecture, there are a lot of options, but here's what I might implement:
+1. Scheduled cloudwatch event to trigger a Glue job.
+2. Create Glue job to extract new records from Timescale and insert to Salesforce.
+    - Use spark connectors to interface with Timescale and Salesforce.

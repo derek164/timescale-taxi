@@ -13,7 +13,7 @@ if __name__ == "__main__":
     TripExtractor().extract()
 
     # Initialize database schema
-    TripDatabase().setup()
+    # TripDatabase().setup()
 
     # Ingest normalized data to TimescaleDB
     raw = Path(__file__).parent / "data" / "raw"

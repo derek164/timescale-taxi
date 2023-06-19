@@ -1,4 +1,3 @@
-import struct
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from multiprocessing import cpu_count
 from pathlib import Path
@@ -36,8 +35,8 @@ class TripLoader:
     @backoff.on_exception(
         backoff.constant,
         FunctionTimedOut,
-        max_tries=3,
-        interval=10,
+        max_tries=2,
+        interval=1,
         raise_on_giveup=False,
     )
     def copy(self, file: str, timeout=30):
@@ -49,17 +48,13 @@ class TripLoader:
 
     def psql_copy_load(self, file: str):
         values, count = self.read_partition(file)
-        conn = self.timescale_db.connection
-        copy_mgr = CopyManager(conn, "trip", cols)
         # print(values[0])
 
-        try:
-            copy_mgr.copy(values)
-        except struct.error as error:
-            print(f"{file} invalid data")
-            raise error
-
+        conn = self.timescale_db.connection
+        copy_mgr = CopyManager(conn, "trip", cols)
+        copy_mgr.copy(values)
         conn.commit()
+
         Path(file).unlink()
         return file, count
 
