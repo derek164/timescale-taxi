@@ -151,7 +151,7 @@ In a production setting, I would have used `S3`/`EMRFS` as a file store.
 ## Daily Saleforce Load
 Before getting into the architecture, we need to make a fanciful assumption that the source data is updated on a daily basis. In actuality, trip data is published monthly (with two months delay) instead of bi-annually as of 05/13/2022. Additionally, we'll assume that the source data is provided in a comparable format (i.e. `.parquet`) and the Timescale database is populated by a process similar to this pipeline.
 
-With that said, this pipeline could follow this general strategy:
+With that said, pushing data into Saleforce can follow this general strategy:
 1. In the process that populates Timescale with trip data, include a field in the `trip` table to denote the time at which a record was inserted.
 2. Trigger an overnight process to migrate trips inserted the previous day to Salesforce.
 
