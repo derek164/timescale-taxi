@@ -147,7 +147,7 @@ taxi
 In a production setting, I would have used `S3`/`EMRFS` as a file store. 
 
 ## Daily Saleforce Load
-Before getting into the architecture, we need to make a fanciful assumption that the source data is updated on a daily basis. In actuality, trip data is published monthly (with two months delay) instead of bi-annually as of 05/13/2022. Additionally, we'll assume that the source data is provided in a comparable format (i.e. `.parquet`) and the Timescale database is populated by a process similar to this pipeline.
+Before getting into the architecture, we need to make a fanciful assumption that the source data is updated on a daily basis. In actuality, trip data is published monthly (with two months delay) as of 05/13/2022. Additionally, I'll assume that the source data is provided in a comparable format (i.e. `.parquet`) and the Timescale database is populated by a process similar to this pipeline.
 
 With that said, pushing data into Saleforce can follow this general strategy:
 1. In the process that populates Timescale with trip data, include a field in the `trip` table to denote the time at which a record was inserted.
@@ -156,6 +156,6 @@ With that said, pushing data into Saleforce can follow this general strategy:
 With respect to architecture, there are a lot of options, but here's what I might implement:
 1. Scheduled cloudwatch event to trigger a lambda function.
 2. Lambda function triggers glue job, and passes on date parameter from cloudwatch event.
+    - The default date is the previous day. For backfills, specify the date in the cloudwatch event.
 3. Glue job to extract records inserted on the given date from Timescale and write to Salesforce.
     - Use spark connectors to interface with Timescale and Salesforce.
-    - The default date is the previous day. For backfills, specify the date in the cloudwatch event.
