@@ -134,6 +134,23 @@ class TripDatabase:
         conn.commit()
         conn.close()
 
+    def manually_compress_chunks(self):
+        with self.timescale_db.connection as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT compress_chunk(decompressed.chunk)
+                FROM (
+                    SELECT CONCAT(chunk_schema,'.', chunk_name) AS chunk
+                    FROM timescaledb_information.chunks 
+                    WHERE hypertable_name = 'trip' AND is_compressed = 'False'
+                ) AS decompressed
+                """
+            )
+            columns = [desc[0] for desc in cursor.description]
+            df = pd.DataFrame(cursor.fetchall(), columns=columns)
+            print(df.to_string())
+
     def preview(self):
         print(" location table ".center(120, "-"))
         self.preview_location_table()
