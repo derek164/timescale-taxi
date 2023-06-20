@@ -7,7 +7,7 @@ from timescale.client import TimeScaleClient
 
 
 pd.set_option("display.width", 120)
-pd.set_option("display.max_columns", 7)
+pd.set_option("display.max_columns", None)
 
 
 class TripDatabase:
@@ -183,7 +183,8 @@ class TripDatabase:
             cursor.execute("SELECT * FROM pickup_location_daily_summary LIMIT 5;")
             columns = [desc[0] for desc in cursor.description]
             df = pd.DataFrame(cursor.fetchall(), columns=columns)
-            print(df.head())
+            df["avg_passenger_count"] = pd.to_numeric(df["avg_passenger_count"])
+            print(df.round(2).head())
 
     def preview_top10_distance_trips(self):
         with self.timescale_db.connection as conn:
