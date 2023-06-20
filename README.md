@@ -92,7 +92,7 @@ GROUP BY day, PULocationID;
 #### `trip_distance_daily`
 This view is a daily [continuous aggregate](https://docs.timescale.com/getting-started/latest/create-cagg/) that contains percentile aggregates for `trip_distance`. Using accessors, it becomes simple and fast to then calculate approximate percentiles over various time horizons.
 ```sql
-CREATE MATERIALIZED VIEW trip_distance_daily
+CREATE MATERIALIZED VIEW IF NOT EXISTS trip_distance_daily
 WITH (timescaledb.continuous)
 AS SELECT
     time_bucket('1 day', pickup_datetime) AS day,

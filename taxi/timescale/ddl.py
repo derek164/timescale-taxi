@@ -122,7 +122,7 @@ class TripDatabase:
         cursor = conn.cursor()
         cursor.execute(
             """
-            CREATE MATERIALIZED VIEW trip_distance_daily
+            CREATE MATERIALIZED VIEW IF NOT EXISTS trip_distance_daily
             WITH (timescaledb.continuous)
             AS SELECT
                 time_bucket('1 day', pickup_datetime) AS day,
